@@ -4,50 +4,83 @@ using UnityEngine;
 
 public class ObjectController : MonoBehaviour {
 
-    public bool isWhite = true; //  true for white, false for black
+    public bool isWhite = true; // true for white, false for black
     public Material white;
     public Material black;
     private GameObject player;
+    private PlayerController player_controller;
+    private GameObject game;
+    public bool isTree = false;
+    private bool curr_color = true; // true for white, false for black
+    private Material[] mesh;
 
-    // Use this for initialization
-    void Start()
+    public void Initialize(bool is_Tree)
     {
+        isTree = is_Tree;
         player = transform.parent.FindChild("Player").gameObject;
+        player_controller = player.GetComponent<PlayerController>();
+        game = GameObject.Find("GameController");
+        change_material();
+        transform.Rotate(Vector3.up * Random.value * 360);
     }
-
-    //// Update is called once per frame
-    //void Update () {
-
-    //}
 
     void OnTriggerEnter(Collider other)
     {
-        Debug.Log(other.ToString() + " entered the trigger");
         if (other.gameObject == player)
         {
-            player.GetComponent<PlayerController>().touch_object(transform.gameObject);
+            player_controller.touch_object(transform.gameObject);
+            if (isTree)
+            {
+                if (transform.FindChild("Hanger0").childCount > 0)
+                    player_controller.touch_object(transform.FindChild("Hanger0").GetChild(0).gameObject);
+                if (transform.FindChild("Hanger1").childCount > 0)
+                    player_controller.touch_object(transform.FindChild("Hanger1").GetChild(0).gameObject);
+            }
         }
     }
 
     void OnTriggerExit(Collider other)
     {
-        Debug.Log(other.ToString() + " exited the trigger");
         if (other.gameObject == player)
         {
-            player.GetComponent<PlayerController>().leave_object(transform.gameObject);
+            player_controller.leave_object(transform.gameObject);
+            if (isTree)
+            {
+                if (transform.FindChild("Hanger0").childCount > 0)
+                    player_controller.leave_object(transform.FindChild("Hanger0").GetChild(0).gameObject);
+                if (transform.FindChild("Hanger1").childCount > 0)
+                    player_controller.leave_object(transform.FindChild("Hanger1").GetChild(0).gameObject);
+            }
         }
     }
 
     public void change_color()
     {
+        if (transform.parent.name == "Teleporter")
+            return;
+
         isWhite = !isWhite;
-        if (isWhite)
+        change_material();
+    }
+
+    public void change_material()
+    {
+        //if (isWhite)
+        //    GetComponent<MeshRenderer>().material = white;
+        //else
+        //    GetComponent<MeshRenderer>().material = black;
+        curr_color = isWhite;
+        mesh = GetComponent<MeshRenderer>().materials;
+        for (int i = 0; i < mesh.Length; i++)
         {
-            GetComponent<MeshRenderer>().material = white;
+            if (curr_color)
+                mesh[i] = white;
+            else
+                mesh[i] = black;
+
+            curr_color = !curr_color;
         }
-        else
-        {
-            GetComponent<MeshRenderer>().material = black;
-        }
+
+        GetComponent<MeshRenderer>().materials = mesh;
     }
 }
